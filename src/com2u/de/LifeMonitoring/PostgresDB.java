@@ -17,15 +17,17 @@ public class PostgresDB {
 	 String database="";
 	String user="";
 	String passwd="";
+	String dbURL="";
+	String dbpath="";
 	
-	
-	public PostgresDB(String dbURL, String _database, String _user, String _passwd) {
+	public PostgresDB(String _dbURL, String _database, String _user, String _passwd) {
 		database = _database; 
 		user = _user; 
 		passwd = _passwd;
+		dbURL = _dbURL;
 		try {		
 			DriverManager.registerDriver(new org.postgresql.Driver());
-			String dbpath = dbURL+database;
+			dbpath = dbURL+database;
 			//String dbpath = "jdbc:postgresql://localhost:5432/"+database;
 			Properties parameters = new Properties();
 			parameters.put("user", user);
@@ -43,6 +45,7 @@ public class PostgresDB {
 	         
 			
 		} catch (SQLException e) {
+			System.out.println("Exception in LifeMonitoring Database Costruct "+e.toString());
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}	
@@ -56,13 +59,14 @@ public class PostgresDB {
 	}
 	
 	public void init(){
+		String dbURL = "";
 		try {		
 			DriverManager.registerDriver(new org.postgresql.Driver());
-			String dbURL = "jdbc:postgresql://localhost:5432/"+database;
+			//dbURL = "jdbc:postgresql://localhost:5432/"+database;
 			Properties parameters = new Properties();
 			parameters.put("user", user);
 			parameters.put("password", passwd);
-			conn = DriverManager.getConnection(dbURL, parameters);
+			conn = DriverManager.getConnection(dbpath, parameters);
 			 if (conn != null) {
 	                System.out.println("Connected to database ");
 	            }
@@ -73,6 +77,7 @@ public class PostgresDB {
 			 createNewTable();
 			
 		} catch (SQLException e) {
+			System.out.println("Exception in LifeMonitoring Database Init "+dbURL+"  "+e.toString());
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}	
@@ -109,7 +114,7 @@ public class PostgresDB {
 		String sqlDataset = "CREATE TABLE IF NOT EXISTS status (\n" 
 				+ "	eventtime TIMESTAMP,\n" + "	topic text,\n"
 				+ "	content text\n" + ");";
-		System.out.println("Create Tabel dataset");
+		System.out.println("Create Tabel status");
 		try (Statement stmt = conn.createStatement()) {
 			// create a new table
 			stmt.execute(sqlDataset);
@@ -129,6 +134,28 @@ public class PostgresDB {
 			updateDB(time,path+subHeader[i],subContent[i]);
 			 System.out.println(path+subHeader[i]+"="+subContent[i]);
 	      }
+	}
+	
+	public void updateImage(java.sql.Timestamp time){
+		try {
+			 if (conn == null) {
+	                init();
+	            }
+			 if (conn == null) {
+				 System.out.println("Connection lost");
+				 return;
+			 }
+			 //sqlDate = new java.sql.Timestamp(new java.util.Date().getTime());
+			 String sql = "INSERT INTO \"trigger\" VALUES ('2019-07-05 15:05:39.955',9,0,0,830.0,0.0,0.0,1,X'424d3604f,NULL,NULL,NULL);";
+			 stmt = conn.prepareStatement(sql);
+			 stmt.executeUpdate();
+			 //System.out.println("Updated dataset: "+topic+" : "+content);
+	         
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			init();
+		}
 	}
 	
 	public void updateDB(java.sql.Timestamp time, String topic,  String content){
@@ -154,6 +181,7 @@ public class PostgresDB {
 	         
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
+			System.out.println("Exception in LifeMonitoring Database updateDB "+e.toString());
 			e.printStackTrace();
 			init();
 		}
@@ -178,7 +206,7 @@ public class PostgresDB {
 			 //stmt.setString(3, sensor);
 			 stmt.setString(3, content);
 			 stmt.executeUpdate();
-			 System.out.println("Updated dataset");
+			 System.out.println("Updated dataset: "+topic+" : "+content);
 	         
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

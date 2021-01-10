@@ -62,6 +62,9 @@ public class TwitterClient {
             	twitt.tweetCount++;
             	if (twitt.maxRetweet < status.getRetweetCount()) {
             		twitt.maxRetweet = status.getRetweetCount();
+            		if (twitt.maxRetweet > 10) {
+            			twitt.topTweet = status.getText();
+            		}
             	}
             	twitt.avgRetweet += status.getRetweetCount();
         		System.out.println(twitt.tweetCount+" :"+status.getText());

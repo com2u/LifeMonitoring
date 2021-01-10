@@ -1,0 +1,6 @@
+*.jar
+bin/*
+lib/*
+.settings/*
+log.txt
+nohup.out

@@ -8,5 +8,6 @@ public class TwitterMeasurment {
     public int avgRetweet=0;
     public int distanceCount=1;
     public double distanceAvg=0.000001;
+    public String topTweet = "";
 
 }

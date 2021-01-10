@@ -19,6 +19,7 @@ public class MQTTServer {
 	 MqttConnectOptions connOpts=null;
 	 String broker="";
 	 String clientId="";
+	 int failCount=0;
 	 /*
 	 ActionHandler com2uActionHandler;
 	 
@@ -26,7 +27,8 @@ public class MQTTServer {
 	 public void setActionHandler(ActionHandler _com2uActionHandler){
 		 com2uActionHandler = _com2uActionHandler;
 	 }
-	*/
+	 */
+	
 	public MQTTServer(String _broker, String _clientId, String MQTTUser, String MQTTPassword){
 		broker = _broker;
 		clientId = _clientId;
@@ -40,9 +42,11 @@ public class MQTTServer {
             sampleClient.setCallback(new MqttCallback() {
 				@Override
 				public void connectionLost(Throwable throwable) {
-					System.out.println("ConnectionLost ->");
+					failCount++;
+					System.out.println("ConnectionLost -> "+ failCount);
 					recoverMQTT();
 					/*
+					
 					for (int sub = 0; sub < com2uActionHandler.settings.Subscriptions; sub++) {
 						subscribe(com2uActionHandler.settings.Subscription[sub]);
 						System.out.println("Subscribe :" + com2uActionHandler.settings.Subscription[sub]);
@@ -78,17 +82,18 @@ public class MQTTServer {
             System.out.println("Connecting to broker: "+broker);
             sampleClient.connect(connOpts);
             System.out.println("Connected");
-            
+            failCount=0;
 			
             //sampleClient.subscribe("Com2u/Alive/#");
          
         } catch(MqttException me) {
-        	
+        	failCount++;
             System.out.println("reason "+me.getReasonCode());
             System.out.println("msg "+me.getMessage());
             System.out.println("loc "+me.getLocalizedMessage());
             System.out.println("cause "+me.getCause());
             System.out.println("excep "+me);
+            System.out.println("failCount "+failCount);
             me.printStackTrace();
             recoverMQTT();
         }
@@ -106,17 +111,26 @@ public class MQTTServer {
 	
 	public void recoverMQTT(){
 		try {
-			System.out.println("Try Reconnect");
+			System.out.println("Try Reconnect with delay "+(failCount*10)+" ms");
             connOpts.setCleanSession(true);
-			System.out.println("Connecting to broker: "+broker);
+            if (failCount>3) {
+            	try {
+					Thread.sleep(failCount*10);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+            }
+            System.out.println("Connecting to broker: "+broker);
 			sampleClient.connect(connOpts);
 			System.out.println("Connected");
 		} catch (MqttSecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			failCount++;
 		} catch (MqttException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			failCount++;
 		}
 	}
 	
@@ -124,13 +138,14 @@ public class MQTTServer {
 		try {
 			int qos             = 2;
 			if (content.length() < 12) {
-				System.out.println("Publish message: "+topic+" : "+content);
+				//System.out.println("Publish message: "+topic+" : "+content);
 			} else {
-				System.out.println("Publish message: "+content.substring(0, 10));
+				System.out.println("Publish message: "+topic+" : "+content.substring(0, 10));
 			}
             MqttMessage message = new MqttMessage(content.getBytes());
             message.setQos(2);
             sampleClient.publish(topic, message);
+            failCount=0;
             //System.out.println("Message published");
         } catch(MqttException me) {
             System.out.println("reason "+me.getReasonCode());
